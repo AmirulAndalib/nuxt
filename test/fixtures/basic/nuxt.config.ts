@@ -31,8 +31,7 @@ export default defineNuxtConfig({
       include: ['keepalive-in-config', 'not-keepalive-in-nuxtpage'],
     },
   },
-  buildDir: process.env.NITRO_BUILD_DIR,
-  builder: process.env.TEST_BUILDER as 'webpack' | 'vite' ?? 'vite',
+  builder: process.env.TEST_BUILDER as 'webpack' | 'rspack' | 'vite' ?? 'vite',
   appId: 'nuxt-app-basic',
   build: {
     transpile: [
@@ -63,12 +62,13 @@ export default defineNuxtConfig({
     },
     routeRules: {
       '/route-rules/spa': { ssr: false },
+      '/redirect/catchall': { ssr: false },
       '/head-spa': { ssr: false },
       '/route-rules/middleware': { appMiddleware: 'route-rules-middleware' },
       '/hydration/spa-redirection/**': { ssr: false },
       '/no-scripts': { experimentalNoScripts: true },
+      '/prerender/**': { prerender: true },
     },
-    output: { dir: process.env.NITRO_OUTPUT_DIR },
     prerender: {
       routes: [
         '/random/a',
@@ -123,7 +123,7 @@ export default defineNuxtConfig({
           if (id === 'virtual.css') { return 'virtual.css' }
         },
         load (id) {
-          if (id === 'virtual.css') { return ':root { --virtual: red }' }
+          if (id.includes('virtual.css')) { return ':root { --virtual: red }' }
         },
       }))
       addBuildPlugin(plugin)

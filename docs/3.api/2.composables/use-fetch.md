@@ -50,8 +50,8 @@ You can also use [interceptors](https://github.com/unjs/ofetch#%EF%B8%8F-interce
 const { data, status, error, refresh, clear } = await useFetch('/api/auth/login', {
   onRequest({ request, options }) {
     // Set the request headers
-    options.headers = options.headers || {}
-    options.headers.authorization = '...'
+    // note that this relies on ofetch >= 1.4.0 - you may need to refresh your lockfile
+    options.headers.set('Authorization', '...')
   },
   onRequestError({ request, options, error }) {
     // Handle the request errors
@@ -70,7 +70,11 @@ const { data, status, error, refresh, clear } = await useFetch('/api/auth/login'
 `useFetch` is a reserved function name transformed by the compiler, so you should not name your own function `useFetch`.
 ::
 
-::tip{icon="i-ph-video-duotone" to="https://www.youtube.com/watch?v=njsGVmcWviY" target="_blank"}
+::warning
+If you encounter the `data` variable destructured from a `useFetch` returns a string and not a JSON parsed object then make sure your component doesn't include an import statement like `import { useFetch } from '@vueuse/core`.
+::
+
+::tip{icon="i-ph-video" to="https://www.youtube.com/watch?v=njsGVmcWviY" target="_blank"}
 Watch the video from Alexander Lichter to avoid using `useFetch` the wrong way!
 ::
 
@@ -108,7 +112,7 @@ All fetch options can be given a `computed` or `ref` value. These will be watche
   - `getCachedData`: Provide a function which returns cached data. A _null_ or _undefined_ return value will trigger a fetch. By default, this is: `key => nuxt.isHydrating ? nuxt.payload.data[key] : nuxt.static.data[key]`, which only caches data when `payloadExtraction` is enabled.
   - `pick`: only pick specified keys in this array from the `handler` function result
   - `watch`: watch an array of reactive sources and auto-refresh the fetch result when they change. Fetch options and URL are watched by default. You can completely ignore reactive sources by using `watch: false`. Together with `immediate: false`, this allows for a fully-manual `useFetch`. (You can [see an example here](/docs/getting-started/data-fetching#watch) of using `watch`.)
-  - `deep`: return data in a deep ref object (it is `true` by default). It can be set to `false` to return data in a shallow ref object, which can improve performance if your data does not need to be deeply reactive.
+  - `deep`: return data in a deep ref object. It is `false` by default to return data in a shallow ref object for performance.
   - `dedupe`: avoid fetching same key more than once at a time (defaults to `cancel`). Possible options:
     - `cancel` - cancels existing requests when a new one is made
     - `defer` - does not make new requests at all if there is a pending request
@@ -143,7 +147,7 @@ If you have not fetched data on the server (for example, with `server: false`), 
 
 ```ts [Signature]
 function useFetch<DataT, ErrorT>(
-  url: string | Request | Ref<string | Request> | () => string | Request,
+  url: string | Request | Ref<string | Request> | (() => string) | Request,
   options?: UseFetchOptions<DataT>
 ): Promise<AsyncData<DataT, ErrorT>>
 

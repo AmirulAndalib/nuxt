@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { defineUntypedSchema } from 'untyped'
-import { basename, relative, resolve } from 'pathe'
+import { basename, join, relative, resolve } from 'pathe'
 import { isDebug, isDevelopment, isTest } from 'std-env'
 import { defu } from 'defu'
 import { findWorkspaceDir } from 'pkg-types'
@@ -156,9 +156,12 @@ export default defineUntypedSchema({
    */
   serverDir: {
     $resolve: async (val: string | undefined, get): Promise<string> => {
-      const isV4 = ((await get('future') as Record<string, unknown>).compatibilityVersion === 4)
-
-      return resolve(isV4 ? await get('rootDir') as string : await get('srcDir') as string, val ?? 'server')
+      if (val) {
+        const rootDir = await get('rootDir') as string
+        return resolve(rootDir, val)
+      }
+      const isV4 = (await get('future') as Record<string, unknown>).compatibilityVersion === 4
+      return join(isV4 ? await get('rootDir') as string : await get('srcDir') as string, 'server')
     },
   },
 
@@ -175,7 +178,10 @@ export default defineUntypedSchema({
    * ```
    */
   buildDir: {
-    $resolve: async (val: string | undefined, get): Promise<string> => resolve(await get('rootDir') as string, val || '.nuxt'),
+    $resolve: async (val: string | undefined, get) => {
+      const rootDir = await get('rootDir') as string
+      return resolve(rootDir, val ?? '.nuxt')
+    },
   },
 
   /**
@@ -289,7 +295,7 @@ export default defineUntypedSchema({
    *   function () {}
    * ]
    * ```
-   * @type {(typeof import('../src/types/module').NuxtModule | string | [typeof import('../src/types/module').NuxtModule | string, Record<string, any>] | undefined | null | false)[]}
+   * @type {(typeof import('../src/types/module').NuxtModule<any> | string | [typeof import('../src/types/module').NuxtModule | string, Record<string, any>] | undefined | null | false)[]}
    */
   modules: {
     $resolve: (val: string[] | undefined): string[] => (val || []).filter(Boolean),
@@ -418,7 +424,7 @@ export default defineUntypedSchema({
    */
   alias: {
     $resolve: async (val: Record<string, string>, get): Promise<Record<string, string>> => {
-      const [srcDir, rootDir, assetsDir, publicDir] = await Promise.all([get('srcDir'), get('rootDir'), get('dir.assets'), get('dir.public')]) as [string, string, string, string]
+      const [srcDir, rootDir, assetsDir, publicDir, buildDir] = await Promise.all([get('srcDir'), get('rootDir'), get('dir.assets'), get('dir.public'), get('buildDir')]) as [string, string, string, string, string]
       return {
         '~': srcDir,
         '@': srcDir,
@@ -426,6 +432,8 @@ export default defineUntypedSchema({
         '@@': rootDir,
         [basename(assetsDir)]: resolve(srcDir, assetsDir),
         [basename(publicDir)]: resolve(srcDir, publicDir),
+        '#build': buildDir,
+        '#internal/nuxt/paths': resolve(buildDir, 'paths.mjs'),
         ...val,
       }
     },

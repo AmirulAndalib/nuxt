@@ -1,5 +1,5 @@
 import { computed, getCurrentInstance, getCurrentScope, onBeforeMount, onScopeDispose, onServerPrefetch, onUnmounted, ref, shallowRef, toRef, unref, watch } from 'vue'
-import type { Ref, WatchSource } from 'vue'
+import type { MultiWatchSources, Ref } from 'vue'
 import type { NuxtApp } from '../nuxt'
 import { useNuxtApp } from '../nuxt'
 import { toArray } from '../utils'
@@ -34,7 +34,7 @@ export type KeysOf<T> = Array<
 
 export type KeyOfRes<Transform extends _Transform> = KeysOf<ReturnType<Transform>>
 
-export type MultiWatchSources = (WatchSource<unknown> | object)[]
+export type { MultiWatchSources }
 
 export type NoInfer<T> = [T][T extends any ? 0 : never]
 
@@ -84,7 +84,7 @@ export interface AsyncDataOptions<
    */
   immediate?: boolean
   /**
-   * Return data in a deep ref object (it is true by default). It can be set to false to return data in a shallow ref object, which can improve performance if your data does not need to be deeply reactive.
+   * Return data in a deep ref object (it is false by default). It can be set to false to return data in a shallow ref object, which can improve performance if your data does not need to be deeply reactive.
    */
   deep?: boolean
   /**
@@ -350,7 +350,7 @@ export function useAsyncData<
   if (import.meta.client) {
     // Setup hook callbacks once per instance
     const instance = getCurrentInstance()
-    if (import.meta.dev && !nuxtApp.isHydrating && (!instance || instance?.isMounted)) {
+    if (import.meta.dev && !nuxtApp.isHydrating && !nuxtApp._processingMiddleware /* internal flag */ && (!instance || instance?.isMounted)) {
       // @ts-expect-error private property
       console.warn(`[nuxt] [${options._functionName || 'useAsyncData'}] Component is already mounted, please use $fetch instead. See https://nuxt.com/docs/getting-started/data-fetching`)
     }

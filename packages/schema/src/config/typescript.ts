@@ -20,7 +20,7 @@ export default defineUntypedSchema({
      * builder environment types (with `false`) to handle this fully yourself, or opt for a 'shared' option.
      *
      * The 'shared' option is advised for module authors, who will want to support multiple possible builders.
-     * @type {'vite' | 'webpack' | 'shared' | false | undefined}
+     * @type {'vite' | 'webpack' | 'rspack' | 'shared' | false | undefined}
      */
     builder: {
       $resolve: val => val ?? null,
@@ -45,7 +45,6 @@ export default defineUntypedSchema({
           'vue',
           '@vue/runtime-core',
           '@vue/compiler-sfc',
-          '@vue/runtime-dom',
           'vue-router',
           'vue-router/auto-routes',
           'unplugin-vue-router/client',
